@@ -4,6 +4,23 @@ defmodule Plug.Pedro.HttpServer do
   """
   @adapter Plug.Pedro.HttpServer.Conn
 
+  def child_spec(plug: plug, port: port, options: options) do
+    Application.put_env(
+      :pedro_http_server,
+      :dispatcher,
+      {__MODULE__, [plug: plug, options: options]}
+    )
+    %{start: {__MODULE__, :start_linked_server, [port]}}
+  end
+
+  def start_linked_server(port) do
+    Task.start_link(fn ->
+      Pedro.HttpServer.start(port)
+    end)
+  end
+
+  @spec conn_from_req(port() | {:"$inet", atom(), any()}, atom(), binary() | URI.t()) ::
+          Plug.Conn.t()
   def conn_from_req(req, method, path) do
     {:ok, {remote_ip, _}} = :inet.sockname(req)
     %URI{path: path, query: query} = URI.parse(path)
