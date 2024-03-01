@@ -30,16 +30,28 @@ defmodule Plug.Pedro.HttpServer do
           Plug.Conn.t()
   def conn_from_req(req, method, path) do
     {:ok, {remote_ip, _}} = :inet.sockname(req)
-    %URI{path: path, query: query} = URI.parse(path)
+
+    %URI{path: path, query: qs} = URI.parse(path)
+
+    qs = qs || ""
+
+    path_info =
+      if path == "/" do
+        [path]
+      else
+        path |> Path.relative_to("/") |> Path.split()
+      end
+
     %Plug.Conn{
       adapter: {@adapter, {req, method, path}},
       host: nil,
       method: Atom.to_string(method),
       owner: self(),
-      path_info: path |> Path.relative_to("/") |> Path.split(),
+      path_info: path_info,
       port: nil,
       remote_ip: remote_ip,
-      query_string: query,
+      query_string: qs || "",
+      params: (qs && Plug.Conn.Query.decode(qs)) || %{},
       req_headers: [],
       request_path: path,
       scheme: :http
