@@ -10,7 +10,14 @@ defmodule Plug.Pedro.HttpServer do
       :dispatcher,
       {__MODULE__, [plug: plug, options: options]}
     )
-    %{start: {__MODULE__, :start_linked_server, [port]}}
+    %{
+      id: __MODULE__,
+      start: {
+        __MODULE__,
+        :start_linked_server,
+        [port]
+      }
+    }
   end
 
   def start_linked_server(port) do
